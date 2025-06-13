@@ -1,13 +1,19 @@
 import SwiftUI
 import PhotosUI
 import SwiftData
+#if canImport(UIKit)
 import UIKit
+typealias PlatformImage = UIImage
+#elseif canImport(AppKit)
+import AppKit
+typealias PlatformImage = NSImage
+#endif
 
 struct ExamQuestionRegistrationView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var images: [UIImage] = []
+    @State private var images: [PlatformImage] = []
     @State private var answers: [String] = []
 
     var body: some View {
@@ -19,8 +25,8 @@ struct ExamQuestionRegistrationView: View {
                     for (index, item) in newItems.enumerated() {
                         Task {
                             if let data = try? await item.loadTransferable(type: Data.self),
-                               let uiImage = UIImage(data: data) {
-                                if images.count <= index { images.append(uiImage) }
+                               let image = platformImage(from: data) {
+                                if images.count <= index { images.append(image) }
                             }
                         }
                     }
@@ -30,7 +36,7 @@ struct ExamQuestionRegistrationView: View {
             List {
                 ForEach(images.indices, id: \.self) { index in
                     HStack {
-                        Image(uiImage: images[index])
+                        Image(platformImage: images[index])
                             .resizable()
                             .scaledToFit()
                             .frame(width: 80, height: 80)
@@ -44,7 +50,7 @@ struct ExamQuestionRegistrationView: View {
 
             Button("저장") {
                 for (index, image) in images.enumerated() {
-                    if let data = image.jpegData(compressionQuality: 0.8) {
+                    if let data = jpegData(from: image) {
                         let question = ExamQuestion(imageData: data, answer: answers[index])
                         modelContext.insert(question)
                     }
@@ -55,6 +61,40 @@ struct ExamQuestionRegistrationView: View {
         }
         .navigationTitle("기출문제 등록")
     }
+}
+
+private extension Image {
+    init(platformImage: PlatformImage) {
+#if canImport(UIKit)
+        self.init(uiImage: platformImage)
+#elseif canImport(AppKit)
+        self.init(nsImage: platformImage)
+#else
+        self.init(systemName: "photo")
+#endif
+    }
+}
+
+private func platformImage(from data: Data) -> PlatformImage? {
+#if canImport(UIKit)
+    UIImage(data: data)
+#elseif canImport(AppKit)
+    NSImage(data: data)
+#else
+    nil
+#endif
+}
+
+private func jpegData(from image: PlatformImage) -> Data? {
+#if canImport(UIKit)
+    image.jpegData(compressionQuality: 0.8)
+#elseif canImport(AppKit)
+    guard let tiff = image.tiffRepresentation,
+          let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
+    return bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.8])
+#else
+    nil
+#endif
 }
 
 #Preview {
