@@ -22,7 +22,7 @@ struct ContentView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 32) {
-                Text("난이도 선택")
+                Text("중요도 선택")
                     .font(.largeTitle.bold())
 
                 VStack(alignment: .leading, spacing: 20) {
