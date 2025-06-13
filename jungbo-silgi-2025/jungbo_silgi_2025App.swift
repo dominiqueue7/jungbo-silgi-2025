@@ -13,6 +13,7 @@ struct jungbo_silgi_2025App: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            ExamQuestion.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
