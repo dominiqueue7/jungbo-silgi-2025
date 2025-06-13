@@ -13,8 +13,9 @@ struct ContentView: View {
     @State private var isLow = false
 
     var body: some View {
-        ZStack {
-            LinearGradient(
+        NavigationStack {
+            ZStack {
+                LinearGradient(
                 colors: [.blue.opacity(0.2), .purple.opacity(0.2)],
                 startPoint: .top,
                 endPoint: .bottom
@@ -52,8 +53,14 @@ struct ContentView: View {
                 .tint(.blue)
             }
             .padding()
+            .toolbar {
+                NavigationLink("문제 등록") {
+                    ExamQuestionRegistrationView()
+                }
+            }
         }
     }
+}
 }
 
 #Preview {
