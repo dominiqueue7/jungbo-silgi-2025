@@ -1,9 +1,10 @@
 import SwiftUI
 import PhotosUI
 import SwiftData
+import UIKit
 
 struct ExamQuestionRegistrationView: View {
-    @Environment(.modelContext) private var modelContext
+    @Environment(\.modelContext) private var modelContext
 
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var images: [UIImage] = []
@@ -33,7 +34,10 @@ struct ExamQuestionRegistrationView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 80, height: 80)
-                        TextField("정답 입력", text: $answers[index])
+                        TextField("정답 입력", text: Binding(
+                            get: { answers[index] },
+                            set: { answers[index] = $0 }
+                        ))
                     }
                 }
             }
