@@ -1,5 +1,4 @@
 import SwiftUI
-import PhotosUI
 import SwiftData
 #if canImport(UIKit)
 import UIKit
@@ -12,26 +11,33 @@ typealias PlatformImage = NSImage
 struct ExamQuestionRegistrationView: View {
     @Environment(\.modelContext) private var modelContext
 
-    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var showImporter = false
+    @State private var selectedURLs: [URL] = []
     @State private var images: [PlatformImage] = []
     @State private var answers: [String] = []
 
     var body: some View {
         VStack {
-            PhotosPicker("이미지 선택", selection: $pickerItems, maxSelectionCount: 100, matching: .images)
-                .onChange(of: pickerItems) { newItems in
+            Button("이미지 선택") {
+                showImporter = true
+            }
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.image], allowsMultipleSelection: true) { result in
+                switch result {
+                case .success(let urls):
+                    selectedURLs = urls
                     images = []
-                    answers = Array(repeating: "", count: newItems.count)
-                    for (index, item) in newItems.enumerated() {
-                        Task {
-                            if let data = try? await item.loadTransferable(type: Data.self),
-                               let image = platformImage(from: data) {
-                                if images.count <= index { images.append(image) }
-                            }
+                    answers = Array(repeating: "", count: urls.count)
+                    for url in urls {
+                        if let data = try? Data(contentsOf: url),
+                           let image = platformImage(from: data) {
+                            images.append(image)
                         }
                     }
+                case .failure:
+                    break
                 }
-                .padding()
+            }
+            .padding()
 
             List {
                 ForEach(images.indices, id: \.self) { index in
@@ -55,6 +61,7 @@ struct ExamQuestionRegistrationView: View {
                         modelContext.insert(question)
                     }
                 }
+                try? modelContext.save()
             }
             .buttonStyle(.borderedProminent)
             .padding()
